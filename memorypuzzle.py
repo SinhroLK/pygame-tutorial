@@ -1,6 +1,8 @@
 import random, pygame, sys
 from turtle import window_width
 from pygame.locals import *
+
+from catanimation import DISPLAYSURF
 FPS = 30 #fps jelte
 WINDOWWIDTH = 640 #sirina prozora u pikselima
 WINDOWHEIGHT = 480 #visina prozora u pikselima
@@ -34,3 +36,132 @@ SQUARE = "square"
 DIAMOND = "diamond"
 LINES = "lines"
 OVAL = "oval"
+
+ALLCOLORS = (RED, GREEN, BLUE, YELLOW, ORANGE, PURPLE, CYAN)
+ALLSHAPES = (DONUT, SQUARE, DIAMOND, LINES, OVAL)
+assert len(ALLCOLORS) * len(ALLSHAPES) * 2 >= BOARDWIDTH * BOARDHEIGHT, "Tabla je previse velika za ovaj broj oblika/boja"
+
+def main():
+    global FPSCLOCK, DISPLAYSURF
+    pygame.init()
+    FPSCLOCK = pygame.time.Clock()
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+    mousex = 0 #x koordinata kursora
+    mousey = 0 #y koordinata kursora
+    pygame.display.set_caption("Memory game")
+
+    mainBoard = getRandomizedBoard()
+    revealedBoxes = generateRevealedBoxesData(False)
+    
+    firstSelection = None
+    
+    DISPLAYSURF.fill(BGCOLOR)
+    startGameAnimation(mainBoard)
+
+    while True:
+        mouseClicked = False
+        DISPLAYSURF.fill(BGCOLOR)
+        drawBoard(mainBoard, revealedBoxes)
+
+        for event in pygame.event.get():
+            if event.type==QUIT or (event.type == KEYUP and event.key==K_ESCAPE):
+                pygame.quit()
+                sys.exit()
+            elif event.type == MOUSEMOTION:
+                mousex, mousey = event.pos
+            elif event.type == MOUSEBUTTONUP:
+                mousex,mousey = event.pos
+                mouseClicked = True
+        boxx, boxy = getBoxAtPixel(mousex, mousey)
+        if boxx != None and boxy != None:
+            if not revealedBoxes[boxx][boxy]:
+                drawHighlightBox(boxx, boxy)
+            if not revealedBoxes[boxx][boxy] and mouseClicked:
+                revealBoxesAnimation(mainboard, [(boxx, boxy)])
+                revealedBoxes[boxx][boxy] = True #namesta kutiju na otkriveno
+                if firstSelection == None: #trenutna kutija je prva odabrana
+                    firstSelection = (boxx,boxy)
+                else:#trenutna kutija je druga odabrana
+                    icon1shape, icon1color = getShapeAndColor(mainBoard, firstSelection[0], firstSelection[1])
+                    icon2shape, icon2color = getShapeAndColor(mainBoard, boxx, boxy)
+                    if icon1shape != icon2shape or icon1color!= icon2color:#nisu isti oblik ili boja
+                        pygame.time.wait(1000)#sacekaj 100 milisekundi iliti 1 sekundu
+                        coverBoxesAnimation(mainBoard,[(firstSelection[0], firstSelection[1]), (boxx,boxy)])
+                        revealedBoxes[firstSelection[0]][firstSelection[1]] = False
+                        revealedBoxes[boxx][boxy] = False
+                    elif hasWon(revealedBoxes):#proveri da nisi pobedio
+                        gameWonAnimation(mainBoard)
+                        pygame.time.wait(2000)
+                        #resetuje tablu
+                        mainBoard = getRandomizedBoard()
+                        revealedBoxes = generateRevealedBoxesData(False)
+                        #pokazi tablu
+                        drawBoard(mainBoard, revealedBoxes)
+                        pygame.display.update()
+                        pygame.time.wait(1000)
+                        #ponovo pokreni patriju
+                        startGameAnimation(mainBoard)
+                    firstSelection = None #resetuj prvi odabrani  
+        pygame.display.update()
+        FPSCLOCK.tick(FPS)  
+def generateRevealBoxesData(val):
+    revealedBoxes = []
+    for i in range(BOARDWIDTH):
+        revealedBoxes.append([val] * BOARDHEIGHT)
+    return revealedBoxes
+
+def getRandomizedBoard():
+    #napravi listu svih mogucih kombinacija
+    icons = []
+    for color in ALLCOLORS:
+        for shape in ALLSHAPES:
+            icons.append((shape,color))
+    random.shuffle(icons) #randomizuje raspored ikonica
+    numIconsUsed = int(BOARDWIDTH * BOARDHEIGHT / 2) # kolko ikonica nam treba
+    icons = icons[:numIconsUsed] * 2 # napravi dve od svaku
+    random.shuffle(icons)
+    #napravi tablu sa nasumicno postavljene ikonice
+    board = []
+    for x in range (BOARDWIDTH):
+        column = []
+        for y in range(BOARDHEIGHT):
+            column.append(icons[0])
+            del icons[0] #izbacuje ikonicu kad je iskoristimo
+        board.append(column)
+    return board
+def splitIntoGroupsOf(groupSize, theList):
+    result=[]
+    for i in range(0,len(theList), groupSize):
+        result.append(theList[i:i+groupSize])
+    return result
+def leftTopCoordsOfBox(boxx,boxy):
+    #konvertuje koordinate table u piksele
+    left = boxx * (BOXSIZE + GAPSIZE) + XMARGIN
+    top = boxy * (BOXSIZE + GAPSIZE) + YMARGIN
+    return (left, top)
+def getBoxAtPixel(x,y):
+    for boxx in range(BOARDWIDTH):
+        for boxy in range(BOARDHEIGHT):
+            left, top=leftTopCoordsOfBox(boxx, boxy)
+            boxRect = pygame.Rect(left, top, BOXSIZE, BOXSIZE)
+            if boxRect.collidepoint(x,y):
+                return(boxx,boxy)
+    return(None, None)
+def drawIcon(shape, color, boxx, boxy):
+    quarter = int(BOXSIZE * 0.25)
+    half = int(BOXSIZE * 0.5)
+    left, top = leftTopCoordsOfBox(boxx,boxy) # nadji koordinate 
+    #nacrtaj oblik
+    if shape == DONUT:
+        pygame.draw.circle(DISPLAYSURF, color, (left + half, top+ half), half-5)
+        pygame.draw.circle(DISPLAYSURF, BGCOLOR, (left + half, top + half),quarter-5)
+    elif shape == SQUARE:
+        pygame.draw.rect(DISPLAYSURF, color, (left + quarter, top+ quarter, BOXSIZE - half, BOXSIZE - half))
+    elif shape == DIAMOND:
+        pygame.draw.polygon(DISPLAYSURF, color, ((left + half, top), (left+ BOXSIZE - 1, top + half), (left + half, top + BOXSIZE - 1), (left, top +half)))
+    elif shape == LINES:
+        for i in range(0, BOXSIZE, 4):
+            pygame.draw.line(DISPLAYSURF, color, (left, top + i), (left +i, top))
+            pygame.draw.line(DISPLAYSURF, color, (left + i, top + BOXSIZE- 1), (left + BOXSIZE - 1, top + i))
+    elif shape == OVAL:
+        pygame.draw.ellipse(DISPLAYSURF, color, (left, top + quarter,BOXSIZE, half))
