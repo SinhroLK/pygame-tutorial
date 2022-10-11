@@ -51,7 +51,7 @@ def main():
     pygame.display.set_caption("Memory game")
 
     mainBoard = getRandomizedBoard()
-    revealedBoxes = generateRevealedBoxesData(False)
+    revealedBoxes = generateRevealBoxesData(False)
     
     firstSelection = None
     
@@ -77,7 +77,7 @@ def main():
             if not revealedBoxes[boxx][boxy]:
                 drawHighlightBox(boxx, boxy)
             if not revealedBoxes[boxx][boxy] and mouseClicked:
-                revealBoxesAnimation(mainboard, [(boxx, boxy)])
+                revealBoxesAnimation(mainBoard, [(boxx, boxy)])
                 revealedBoxes[boxx][boxy] = True #namesta kutiju na otkriveno
                 if firstSelection == None: #trenutna kutija je prva odabrana
                     firstSelection = (boxx,boxy)
@@ -94,7 +94,7 @@ def main():
                         pygame.time.wait(2000)
                         #resetuje tablu
                         mainBoard = getRandomizedBoard()
-                        revealedBoxes = generateRevealedBoxesData(False)
+                        revealedBoxes = generateRevealBoxesData(False)
                         #pokazi tablu
                         drawBoard(mainBoard, revealedBoxes)
                         pygame.display.update()
@@ -165,3 +165,65 @@ def drawIcon(shape, color, boxx, boxy):
             pygame.draw.line(DISPLAYSURF, color, (left + i, top + BOXSIZE- 1), (left + BOXSIZE - 1, top + i))
     elif shape == OVAL:
         pygame.draw.ellipse(DISPLAYSURF, color, (left, top + quarter,BOXSIZE, half))
+def getShapeAndColor(board, boxx, boxy):
+    return board[boxx][boxy][0], board[boxx][boxy][1]
+def drawBoxCovers(board, boxes, coverage):
+    #crta kutije koje su pokrivene/oktrivene
+    for box in boxes:
+        left, top = leftTopCoordsOfBox(box[0], box[1])
+        pygame.draw.rect(DISPLAYSURF, BGCOLOR, (left, top, BOXSIZE, BOXSIZE))
+        shape, color = getShapeAndColor(board, box[0], box[1])
+        drawIcon(shape, color, box[0], box[1])
+        if coverage>0:
+            pygame.draw.rect(DISPLAYSURF, BOXCOLOR, (left, top, coverage, BOXSIZE))
+    pygame.display.upadate()
+    FPSCLOCK.tick(FPS)
+def revealBoxesAnimation(board, boxesToReveal):
+    #otkriva kutije
+    for coverage in range(BOXSIZE, (-REVEALSPEED) - 1, -REVEALSPEED):
+        drawBoxCovers(board, boxesToReveal, coverage)
+def coverBoxesAnimation(board, boxesToCover):
+    for coverage in range(0,BOXSIZE + REVEALSPEED, REVEALSPEED):
+        drawBoxCovers(board, boxesToCover, coverage)
+def drawBoard(board, revealed):
+    for boxx in range(BOARDWIDTH):
+        for boxy in range(BOARDHEIGHT):
+            left, top = leftTopCoordsOfBox(boxx, boxy)
+            if not revealed[boxx][boxy]:
+                pygame.draw.rect(DISPLAYSURF, BOXCOLOR, (left, top, BOXSIZE, BOXSIZE))
+            else:
+                shape, color = getShapeAndColor(board, boxx, boxy)
+                drawIcon(shape, color, boxx, boxy)
+def drawHighlightBox(boxx, boxy):
+    left, top = leftTopCoordsOfBox(boxx, boxy)
+    pygame.draw.rect(DISPLAYSURF, HIGHLIGHTCOLOR, (left-5, top-5, BOXSIZE+10, BOXSIZE+10), 4)
+def startGameAnimation(board):
+    coveredBoxes = generateRevealBoxesData(False)
+    boxes = []
+    for x in range(BOARDWIDTH):
+        for y in range(BOARDHEIGHT):
+            boxes.append((x,y))
+    random.shuffle(boxes)
+    boxGroups = splitIntoGroupsOf(8, boxes)
+    drawBoard(board, coveredBoxes)
+    for boxGroup in boxGroups:
+        revealBoxesAnimation(board, boxGroup)
+        coverBoxesAnimation(board, boxGroup)
+def gameWonAnimation(board):
+    coveredBoxes = generateRevealBoxesData(True)
+    color1 = LIGHTBGCOLOR
+    color2 = BGCOLOR
+    for i in range (13):
+        color1, color2 = color2, color1
+        DISPLAYSURF.fill(color1)
+        drawBoard(board, coveredBoxes)
+        pygame.display.update()
+        pygame.time.wait(300)
+def hasWon(revealedBoxes):
+    for i in revealedBoxes:
+        if False in i:
+            return False
+    return True
+
+if __name__ == "__main__":
+    main()
