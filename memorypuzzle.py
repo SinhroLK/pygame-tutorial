@@ -175,7 +175,7 @@ def drawBoxCovers(board, boxes, coverage):
         drawIcon(shape, color, box[0], box[1])
         if coverage>0:
             pygame.draw.rect(DISPLAYSURF, BOXCOLOR, (left, top, coverage, BOXSIZE))
-    pygame.display.upadate()
+    pygame.display.update()
     FPSCLOCK.tick(FPS)
 def revealBoxesAnimation(board, boxesToReveal):
     #otkriva kutije
