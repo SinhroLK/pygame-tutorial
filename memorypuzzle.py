@@ -2,7 +2,6 @@ import random, pygame, sys
 from turtle import window_width
 from pygame.locals import *
 
-from catanimation import DISPLAYSURF
 FPS = 30 #fps jelte
 WINDOWWIDTH = 640 #sirina prozora u pikselima
 WINDOWHEIGHT = 480 #visina prozora u pikselima
