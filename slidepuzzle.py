@@ -97,4 +97,86 @@ def main():
             pygame.display.update()
             FPSCLOCK.tick(FPS)
 
-                
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+def checkForQuit():
+    for event in pygame.event.get(QUIT): # kad oces da iskljucis igricu
+        terminate()
+    for event in pygame.event.get(KEYUP): #KEYUP eventovi
+        if event.key == K_ESCAPE:
+            terminate()
+        pygame.event.post(event) #vraca nazad sve KEYUP objekte
+
+def getStartingBoard():
+    counter = 1
+    board = []
+    for x in range(BOARDWIDTH):
+        column = []
+        for y in range(BOARDHEIGHT):
+            column.append(counter)
+            counter += BOARDWIDTH
+        board.append(column)
+        counter -= BOARDWIDTH * (BOARDHEIGHT - 1) + BOARDWIDTH - 1 
+    board[BOARDWIDTH - 1][BOARDHEIGHT - 1] = None
+    return board
+
+def getBlankPosition(board):
+    for x in range(BOARDWIDTH):
+        for y in range(BOARDHEIGHT):
+            if board[x][y] == None:
+                return(x,y)
+
+def makeMove(board, move):
+    blankx, blanky = getBlankPosition(board)
+    if move == UP:
+        board[blankx][blanky], board[blankx][blanky + 1] = board[blankx][blanky + 1], board[blankx][blanky]
+    elif move == DOWN:
+        board[blankx][blanky], board[blankx][blanky - 1] = board[blankx][blanky - 1], board[blankx][blanky]
+    elif move == LEFT:
+        board[blankx][blanky], board[blankx + 1][blanky] = board[blankx + 1][blanky], board[blankx][blanky]
+    elif move == RIGHT:
+        board[blankx][blanky], board[blankx - 1][blanky] = board[blankx -1][blanky], board[blankx][blanky]
+
+def isValidMove(board, move):
+    blankx, blanky = getBlankPosition(board)
+    return (move == UP and blanky != len(board[0]) - 1) or \
+    (move == DOWN and blanky != 0) or \
+    (move == LEFT and blankx != len(board) - 1) or \
+    (move == RIGHT and blankx != 0)
+
+def getRandomMove(board, lastMove = None):
+    validMoves = [UP, DOWN, LEFT, RIGHT]
+    # remove moves from the list as they are disqualified
+    if lastMove == UP or not isValidMove(board, DOWN):
+        validMoves.remove(DOWN)
+    if lastMove == DOWN or not isValidMove(board, UP):
+        validMoves.remove(UP)
+    if lastMove == LEFT or not isValidMove(board, RIGHT):
+        validMoves.remove(RIGHT)
+    if lastMove == RIGHT or not isValidMove(board, LEFT):
+        validMoves.remove(LEFT)
+    return random.choice(validMoves)
+
+def getTopLeftOfTile(tileX, tileY):
+    left = XMARGIN + (tileX * TILESIZE) + (tileX - 1)
+    top = YMARGIN + (tileY * TILESIZE) + (tileY - 1)
+    return (left, top)
+
+def getSpotClicked(board, x, y):
+    for tileX in range(len(board)):
+        for tileY in range(len(board[0])):
+            left, top = getTopLeftOfTile(tileX, tileY)
+            tileRect = pygame.Rect(left, top, TILESIZE, TILESIZE)
+            if tileRect.collidepoint(x,y):
+                return(tileX, tileY)
+    return(None, None)
+
+def drawTile(tileX, tiley, number, adjx=0, adjy=0):
+    left, top = getTopLeftOfTile(tileX, tiley)
+    pygame.draw.rect(DISPLAYSURF, TILECOLOR, (left + adjx, top + adjy, TILESIZE, TILESIZE))
+    textSurf = BASICFONT.render(str(number), True, TEXTCOLOR)
+    textRect = textSurf.get_rect()
+    textRect.center = left + int(TILESIZE / 2) + adjx , top + int(TILESIZE / 2) + adjy
+    DISPLAYSURF.blit(textSurf, textRect)
