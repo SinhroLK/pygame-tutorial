@@ -34,7 +34,7 @@ LEFT = 'left'
 RIGHT = 'right'
 
 def main():
-    global FPSCLOCK, DISPLAYSURF, BASICFONT, RESET_SURF, RESET_RECT, NEW_SURF, SOLVE_SURF, SOLVE_RECT
+    global FPSCLOCK, DISPLAYSURF, BASICFONT, RESET_SURF, RESET_RECT, NEW_SURF,NEW_RECT,  SOLVE_SURF, SOLVE_RECT
 
     pygame.init()
     FPSCLOCK = pygame.time.Clock()
@@ -180,3 +180,106 @@ def drawTile(tileX, tiley, number, adjx=0, adjy=0):
     textRect = textSurf.get_rect()
     textRect.center = left + int(TILESIZE / 2) + adjx , top + int(TILESIZE / 2) + adjy
     DISPLAYSURF.blit(textSurf, textRect)
+
+def makeText(text, color, bgcolor, top, left):
+    textSurf = BASICFONT.render(text, True, color, bgcolor)
+    textRect = textSurf.get_rect()
+    textRect.topleft = (top, left)
+    return (textSurf, textRect)
+
+def drawBoard(board, message):
+    DISPLAYSURF.fill(BGCOLOR)
+    if message:
+        textSurf, textRect = makeText(message, MESSAGECOLOR, BGCOLOR, 5, 5)
+        DISPLAYSURF.blit(textSurf, textRect)
+    for tilex in range(len(board)):
+        for tiley in range(len(board[0])):
+            if board[tilex][tiley]:
+                drawTile(tilex, tiley, board[tilex][tiley])
+    left, top = getTopLeftOfTile(0,0)
+    width = BOARDWIDTH * TILESIZE
+    height = BOARDHEIGHT * TILESIZE
+    pygame.draw.rect(DISPLAYSURF, BORDERCOLOR, (left-5, top-5, width+11, height+11), 4)
+    DISPLAYSURF.blit(RESET_SURF, RESET_RECT)
+    DISPLAYSURF.blit(NEW_SURF, NEW_RECT)
+    DISPLAYSURF.blit(SOLVE_SURF, SOLVE_RECT)
+
+def slideAnimation(board, direction, message, animationSpeed):
+    # Note: This function does not check if the move is valid.
+
+    blankx, blanky = getBlankPosition(board)
+    if direction == UP:
+        movex = blankx
+        movey = blanky + 1
+    elif direction == DOWN:
+        movex = blankx
+        movey = blanky - 1
+    elif direction == LEFT:
+        movex = blankx + 1
+        movey = blanky
+    elif direction == RIGHT:
+        movex = blankx - 1
+        movey = blanky
+
+    # prepare the base surface
+    drawBoard(board, message)
+    baseSurf = DISPLAYSURF.copy()
+    # draw a blank space over the moving tile on the baseSurf Surface.
+    moveLeft, moveTop = getTopLeftOfTile(movex, movey)
+    pygame.draw.rect(baseSurf, BGCOLOR, (moveLeft, moveTop, TILESIZE, TILESIZE))
+
+    for i in range(0, TILESIZE, animationSpeed):
+        # animate the tile sliding over
+        checkForQuit()
+        DISPLAYSURF.blit(baseSurf, (0, 0))
+        if direction == UP:
+            drawTile(movex, movey, board[movex][movey], 0, -i)
+        if direction == DOWN:
+            drawTile(movex, movey, board[movex][movey], 0, i)
+        if direction == LEFT:
+            drawTile(movex, movey, board[movex][movey], -i, 0)
+        if direction == RIGHT:
+            drawTile(movex, movey, board[movex][movey], i, 0)
+
+        pygame.display.update()
+        FPSCLOCK.tick(FPS)
+
+
+def generateNewPuzzle(numSlides):
+    # From a starting configuration, make numSlides number of moves (and
+    # animate these moves).
+    sequence = []
+    board = getStartingBoard()
+    drawBoard(board, '')
+    pygame.display.update()
+    pygame.time.wait(500) # pause 500 milliseconds for effect
+    lastMove = None
+    for i in range(numSlides):
+        move = getRandomMove(board, lastMove)
+        slideAnimation(board, move, 'Generating new puzzle...', animationSpeed=int(TILESIZE / 3))
+        makeMove(board, move)
+        sequence.append(move)
+        lastMove = move
+    return (board, sequence)
+
+
+def resetAnimation(board, allMoves):
+    # make all of the moves in allMoves in reverse.
+    revAllMoves = allMoves[:] # gets a copy of the list
+    revAllMoves.reverse()
+
+    for move in revAllMoves:
+        if move == UP:
+            oppositeMove = DOWN
+        elif move == DOWN:
+            oppositeMove = UP
+        elif move == RIGHT:
+            oppositeMove = LEFT
+        elif move == LEFT:
+            oppositeMove = RIGHT
+        slideAnimation(board, oppositeMove, '', animationSpeed=int(TILESIZE / 2))
+        makeMove(board, oppositeMove)
+
+
+if __name__ == '__main__':
+    main()
