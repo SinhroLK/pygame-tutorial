@@ -147,9 +147,9 @@ PIECES = {'S': S_SHAPE_TEMPLATE,
           'T': T_SHAPE_TEMPLATE}
 def main():
     global FPSCLOCK, DISPLAYSURF, BASICFONT, BIGFONT
-    pygame.inti()
-    FPSLOCK = pygame.time.Clock()
-    DISPLAYSIRF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
+    pygame.init()
+    FPSCLOCK = pygame.time.Clock()
+    DISPLAYSURF = pygame.display.set_mode((WINDOWWIDTH, WINDOWHEIGHT))
     BASICFONT = pygame.font.Font('freesansbold.ttf', 18)
     BIGFONT = pygame.font.Font('freesansbold.ttf', 100)
     pygame.display.set_caption('Тетрис')
@@ -285,3 +285,43 @@ def runGame():
 
         pygame.display.update()
         FPSCLOCK.tick(FPS)
+
+def makeTextObj(text, font, color):
+    surf = font.render(text, True, color)
+    return surf, surf.get_rect()
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+def checkForKeyPress():
+    checkForQuit()
+    for event in pygame.event.get([KEYDOWN, KEYUP]):
+        if event == KEYDOWN:
+            continue
+        return event.key
+    return None
+
+def showTextScreen(text):
+    titleSurf, titleRect = makeTextObj(text, BIGFONT, TEXTSHADOWCOLOR)
+    titleRect.center = (int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2))
+    DISPLAYSURF.blit(titleSurf, titleRect)
+
+    titleSurf, titleRect = makeTextObj(text, BIGFONT, TEXTCOLOR)
+    titleRect.center = (int(WINDOWWIDTH / 2) - 3, int(WINDOWHEIGHT / 2) - 3)
+    DISPLAYSURF.blit(titleSurf, titleRect)
+    pressKeySurf, pressKeyRect = makeTextObj('Прес ени ки ту плеј.' , BASICFONT, TEXTCOLOR)
+    pressKeyRect,center = (int(WINDOWWIDTH / 2), int(WINDOWHEIGHT / 2) + 100)
+    DISPLAYSURF.blit(pressKeySurf, pressKeyRect)
+
+    while checkForKeyPress() == None:
+        pygame.display.update()
+        FPSCLOCK.tick()
+
+def checkForQuit():
+    for event in pygame.event.get(QUIT):
+        terminate()
+    for event in pygame.event.get(KEYUP):
+        if event.key == K_ESCAPE:
+            terminate()
+    pygame.event.post(event)
