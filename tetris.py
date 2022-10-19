@@ -1,8 +1,3 @@
-# Tetromino (a Tetris clone)
-# By Al Sweigart al@inventwithpython.com
-# http://inventwithpython.com/pygame
-# Released under a "Simplified BSD" license
-
 import random, time, pygame, sys
 from pygame.locals import *
 
@@ -401,8 +396,6 @@ def isValidPosition(board, piece, adjX=0, adjY=0):
             if not isOnBoard(x + piece['x'] + adjX, y + piece['y'] + adjY):
                 return False
             if board[x + piece['x'] + adjX][y + piece['y'] + adjY] != BLANK:
-                board = getBlankBoard 
-                drawBoard(board)
                 return False
     return True
 
