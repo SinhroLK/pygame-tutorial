@@ -494,7 +494,7 @@ def drawPiece(piece, pixelx=None, pixely=None):
 
 def drawNextPiece(piece):
     # draw the "next" text
-    nextSurf = BASICFONT.render('Даљше:', True, TEXTCOLOR)
+    nextSurf = BASICFONT.render('Нехт:', True, TEXTCOLOR)
     nextRect = nextSurf.get_rect()
     nextRect.topleft = (WINDOWWIDTH - 120, 80)
     DISPLAYSURF.blit(nextSurf, nextRect)
