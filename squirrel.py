@@ -1,0 +1,86 @@
+import pygame, random, time, math, sys
+from pygame.locals import *
+
+FPS = 30
+WINWIDTH = 640
+WINHEIGHT = 480
+HALF_WINWIDTH = int(WINWIDTH/2)
+HALF_WINHEIGHT = int(WINHEIGHT/2)
+
+GRASSCOLOR = (24 ,255, 0)
+WHITE = (255, 255, 255)
+RED = (255, 0, 0)
+CAMERASLACK = 90 #koliko se veverica pomeri pre nego se pomeri kamera
+MOVERATE = 9 #kolko brzo se lik pomera
+BOUNCERATE = 6 #kolko brzo lik skace
+BOUNCEHEIGHT = 30 #kolko visoko lik skace
+STARTSIZE = 25 #pocetna velicina lika
+WINSIZE = 300 #velicina potrebna za kraj igre
+INVULTIME = 2 #koliko sekundi je lik imun na stetu nakon sto ga udare
+GAMEOVERTIME = 4 #kolko dugo game over screen ostaje nakon sto se igra zavrsi
+MAXHEALTH = 3 #kolko HP lik ima na pocetku
+NUMGRASS = 80 #broj travnatih povrsina
+NUMSQUIRRELS = 30 #broj veverica u aktivnom prostoru
+SQUIRRELMINSPEED = 3 #najsporija veverica
+SQUIRRELMAXSPEED = 7 #najbrza veverica
+DIRCHANGEFREQ = 2 #% sanse promene smera po frejmu
+LEFT = 'left'
+RIGHT = 'right'
+
+def main():
+    global FPSCLOCK, DISPLAYSURF, BASICFONT, L_SQUIR_IMG, R_SQUIR_IMG, GRASSIMAGES
+    pygame.init()
+    FPSCLOCK = pygame.time.Clock()
+    pygame.display.set_icon(pygame.image.load('gameicon.png'))
+    DISPLAYSURF = pygame.display.set_mode((WINWIDTH, WINHEIGHT))
+    pygame.display.set_caption('Squirrel eat squirrel')
+    BASICFONT = pygame.font.Font('freesansbold.ttf', 32)
+    #ucitaj slike
+    L_SQUIR_IMG = pygame.image.load('squirrel.py')
+    R_SQUIR_IMG = pygame.transform.flip(L_SQUIR_IMG,True,False)
+    GRASSIMAGES = []
+    for i in range(5):
+        GRASSIMAGES.append(pygame.image.load('grass%s.png' %i))
+    while True:
+        runGame()
+
+def runGame():
+    #podesi promenljive za pocetak
+    invulnerableMode = False #da li je lik neranjiv
+    invulnerableStartTime = 0 #trenutak kada je postao neranjiv
+    gameOverMode = False #da li je igrac izgubio
+    gameOverStartTime = 0 #trenutak kada je igrac izgubio
+    winMode = False #da li je igrac pobedio
+
+    gameOverSurf = BASICFONT.render('Game Over', True, WHITE)
+    gameOverRect = gameOverSurf.get_rect()
+    gameOverRect.center = (HALF_WINWIDTH, HALF_WINHEIGHT)
+
+    winSurf = BASICFONT.render('YOU WON!!', True, WHITE)
+    winRect = winSurf.get_rect()
+    winRect.center = (HALF_WINWIDTH, HALF_WINHEIGHT)
+
+    winSurf2 = BASICFONT.render('Press "r" to restart', True, WHITE)
+    winRect2 = winSurf2.get_rect()
+    winRect2.center = (HALF_WINWIDTH, HALF_WINHEIGHT)
+
+    #camerax i cameray su koordinate sredine kamere
+    camerax = 0
+    cameray = 0
+
+    grassObjs = [] #svi trava objekti
+    squirrelObjs = [] #svi ne-lik veverica objekti
+    #lik objekat
+    playerObj = {'surface': pygame.transform.scale(L_SQUIR_IMG,(STARTSIZE, STARTSIZE)),
+                 'facing': LEFT,
+                 'size': STARTSIZE,
+                 'x': HALF_WINWIDTH,
+                 'y': HALF_WINHEIGHT,
+                 'bounce': 0,
+                 'health': MAXHEALTH}
+    moveLeft = False
+    moveRight = False
+    moveUp = False
+    moveDown = False
+
+    #random trava za pocetak
