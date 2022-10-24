@@ -84,3 +84,31 @@ def runGame():
     moveDown = False
 
     #random trava za pocetak
+    for i in range(10):
+        grassObjs.append(makeNewGrass(camerax, cameray))
+        grassObjs[i]['x'] = random.randint(0,WINWIDTH)
+        grassObjs[i]['y'] = random.randint(0, WINHEIGHT)
+
+    while True:
+        #proveri dal treba da se iskljuci neranjivost
+        if invulnerableMode and time.Time() - invulnerableStartTime > INVULTIME:
+            invulnerableMode = False
+        
+        #pomeri veverice
+        for sObjs in squirrelObjs:
+            #pomeraj veverice i podesi bounce
+            sObjs['x'] += sObjs['movex']
+            sObjs['y'] += sObjs['movey']
+            sObjs['bounce'] += 1
+            if sObjs['bounce'] > sObjs['bouncerate']:
+                sObjs['bounce'] = 0 #resetuj bounce
+            # random sansa da promene smer
+            if random.randint(0,99) < DIRCHANGEFREQ:
+                sObjs['movex'] = getRandomVelocity()
+                sObjs['movey'] = getRandomVelocity()
+                if sObjs['movex'] > 0: # okrenut desno
+                    sObjs['surface'] = pygame.transform.scale(R_SQUIR_IMG, (sObjs['width'], sObjs['height']))
+                else: #okrenut levo
+                    sObjs['surface'] = pygame.transform.scale(L_SQUIR_IMG, (sObjs['width'], sObjs['height']))
+        
+                    
