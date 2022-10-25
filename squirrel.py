@@ -111,4 +111,23 @@ def runGame():
                 else: #okrenut levo
                     sObjs['surface'] = pygame.transform.scale(L_SQUIR_IMG, (sObjs['width'], sObjs['height']))
         
-                    
+        #prodji keoz sve objekte i vidi dal neki treba da se obrise
+        for i in range(len(grassObjs)-1,-1,-1):
+            if isOutsideActiveArea(camerax, cameray, grassObjs[i]):
+                del grassObjs[i]
+        for i in range(len(squirrelObjs)-1,-1,-1):
+            if isOutsideActiveArea(camerax, cameray, squirrelObjs[i]):
+                del squirrelObjs[i]
+        
+        #dodaj jos trave i veverica ako ih nema dovoljno
+        while len(grassObjs) < NUMGRASS:
+            grassObjs.append(makeNewGrass(camerax, cameray))
+        while len(squirrelObjs) < NUMSQUIRRELS:
+            squirrelObjs.append(makeNewSquirrel(camerax, cameray))
+        
+        #podesi camerax i cameray ako si izvan camera slack granica
+        playerCenterx = playerObj['x'] + int(playerObj['size'] / 2)
+        playerCentery = playerObj['y'] + int(playerObj['size'] / 2)
+        if (camerax + HALF_WINWIDTH) - playerCenterx > CAMERASLACK:
+            camerax = playerCenterx + CAMERASLACK - HALF_WINWIDTH
+
