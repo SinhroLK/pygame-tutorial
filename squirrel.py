@@ -143,14 +143,30 @@ def runGame():
 
         # nacrtaj trava objekte
         for gObj in grassObjs:
-            gRect = pygame.rect((gObj['x'] - camerax,
+            gRect = pygame.Rect((gObj['x'] - camerax,
                                  gObj['y'] - cameray,
                                  gObj['width'],
                                  gObj['height']))
             DISPLAYSURF.blit(GRASSIMAGES[gObj['grassImage']], gRect)
         
+        # nacrtaj ostale veverice
+        for sObj in squirrelObjs:
+            sRect = pygame.Rect((sObj['x'] - camerax,
+                                 sObj['y'] - cameray - getBounceAmount(sObj['bounce'], sObj['bouncerate'], sObj['bounceheight']),
+                                 sObj['width'],
+                                 sObj['height']))
+            DISPLAYSURF.blit(sObj['surface'], sObj['rect'])
         
-                                
+        #nacrtaj lika
+        flashIsOn = round(time.time(), 1) * 10 % 2 == 1
+        if not gameOverMode and not (invulnerableMode and flashIsOn):
+            playerObj['rect'] = pygame.Rect((playerObj['x'] - camerax,
+            playerObj['y'] - cameray - getBounceAmount(playerObj['bounce'], BOUNCERATE, BOUNCEHEIGHT),
+            playerObj['size'],
+            playerObj['size']))
+            DISPLAYSURF.blit(playerObj['surface'], playerObj['rect'])
+
+        # nacrtaj health bar
+        drawHealthMeter(playerObj['health'])
+
         
-
-
