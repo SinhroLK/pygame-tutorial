@@ -130,4 +130,27 @@ def runGame():
         playerCentery = playerObj['y'] + int(playerObj['size'] / 2)
         if (camerax + HALF_WINWIDTH) - playerCenterx > CAMERASLACK:
             camerax = playerCenterx + CAMERASLACK - HALF_WINWIDTH
+        elif playerCenterx - (camerax + HALF_WINWIDTH) > CAMERASLACK:
+            camerax = playerCenterx - CAMERASLACK - HALF_WINWIDTH
+        
+        if (cameray + HALF_WINHEIGHT) - playerCentery > CAMERASLACK:
+            cameray = playerCentery + CAMERASLACK - HALF_WINHEIGHT
+        elif playerCentery - (cameray + HALF_WINHEIGHT) > CAMERASLACK:
+            cameray = playerCentery - CAMERASLACK - HALF_WINHEIGHT
+
+        # ofarbaj pozadinu zeleno
+        DISPLAYSURF.fill(GRASSCOLOR)
+
+        # nacrtaj trava objekte
+        for gObj in grassObjs:
+            gRect = pygame.rect((gObj['x'] - camerax,
+                                 gObj['y'] - cameray,
+                                 gObj['width'],
+                                 gObj['height']))
+            DISPLAYSURF.blit(GRASSIMAGES[gObj['grassImage']], gRect)
+        
+        
+                                
+        
+
 
