@@ -252,3 +252,79 @@ def runGame():
                 DISPLAYSURF.blit(winSurf2, winRect2)
             pygame.display.update()
             FPSCLOCK.tick(FPS)
+
+def drawHealthMeter(currentHealth):
+    for i in range(currentHealth): # nacrtaj crvene helte
+        pygame.draw.rect(DISPLAYSURF, RED,   (15, 5 + (10 * MAXHEALTH) - i * 10, 20, 10))
+    for i in range(MAXHEALTH): # dodaj beli okvir
+        pygame.draw.rect(DISPLAYSURF, WHITE, (15, 5 + (10 * MAXHEALTH) - i * 10, 20, 10), 1)
+
+def terminate():
+    pygame.quit()
+    sys.exit()
+
+def getBounceAmount(currentBounce, bounceRate, bounceHeight):
+    # vraca broj piksela koje dovaja za skok
+    # veci bounceRate znaci sporiji skok
+    # veci bounceHeight znaci visi skok
+    # currentBounce ce uvek biti manji od bounceRate
+    return int(math.sin( (math.pi / float(bounceRate)) * currentBounce ) * bounceHeight)
+
+def getRandomVelocity():
+    speed = random.randint(SQUIRRELMINSPEED, SQUIRRELMAXSPEED)
+    if random.randint(0, 1) == 0:
+        return speed
+    else:
+        return -speed
+
+def getRandomOffCameraPos(camerax, cameray, objWidth, objHeight):
+    # napravi rect pogleda kamere
+    cameraRect = pygame.Rect(camerax, cameray, WINWIDTH, WINHEIGHT)
+    while True:
+        x = random.randint(camerax - WINWIDTH, camerax + (2 * WINWIDTH))
+        y = random.randint(cameray - WINHEIGHT, cameray + (2 * WINHEIGHT))
+        # napravi rect sa random koordinatama i koristi  colliderect()
+        # da se pobrine da desna ivica nije u pogledu kamere
+        objRect = pygame.Rect(x, y, objWidth, objHeight)
+        if not objRect.colliderect(cameraRect):
+            return x, y
+    
+def makeNewSquirrel(camerax, cameray):
+    sq = {}
+    generalSize = random.randint(5, 25)
+    multiplier = random.randint(1, 3)
+    sq['width']  = (generalSize + random.randint(0, 10)) * multiplier
+    sq['height'] = (generalSize + random.randint(0, 10)) * multiplier
+    sq['x'], sq['y'] = getRandomOffCameraPos(camerax, cameray, sq['width'], sq['height'])
+    sq['movex'] = getRandomVelocity()
+    sq['movey'] = getRandomVelocity()
+    if sq['movex'] < 0: # veveica gleda levo
+        sq['surface'] = pygame.transform.scale(L_SQUIR_IMG, (sq['width'], sq['height']))
+    else: # veverica gleda desno
+        sq['surface'] = pygame.transform.scale(R_SQUIR_IMG, (sq['width'], sq['height']))
+    sq['bounce'] = 0
+    sq['bouncerate'] = random.randint(10, 18)
+    sq['bounceheight'] = random.randint(10, 50)
+    return sq
+
+def makeNewGrass(camerax, cameray):
+    gr = {}
+    gr['grassImage'] = random.randint(0, len(GRASSIMAGES) - 1)
+    gr['width']  = GRASSIMAGES[0].get_width()
+    gr['height'] = GRASSIMAGES[0].get_height()
+    gr['x'], gr['y'] = getRandomOffCameraPos(camerax, cameray, gr['width'], gr['height'])
+    gr['rect'] = pygame.Rect( (gr['x'], gr['y'], gr['width'], gr['height']) )
+    return gr
+
+def isOutsideActiveArea(camerax, cameray, obj):
+    # vrati false ako su camerax i cameray vise od
+    # duzine pola prozora van ivica prozora
+    boundsLeftEdge = camerax - WINWIDTH
+    boundsTopEdge = cameray - WINHEIGHT
+    boundsRect = pygame.Rect(boundsLeftEdge, boundsTopEdge, WINWIDTH * 3, WINHEIGHT * 3)
+    objRect = pygame.Rect(obj['x'], obj['y'], obj['width'], obj['height'])
+    return not boundsRect.colliderect(objRect)
+
+
+if __name__ == '__main__':
+    main()
