@@ -97,3 +97,99 @@ def main():
         elif result == 'reset':
             pass # petlja sama okrene runLevel() da resetuje
 
+def runLevel():
+    global currentImage
+    levelObj = levels[levelNum]
+    mapObj = decorateMap(levelObj['mapObj'], levelObj['startState']['player'])
+    gameStateObj = copy.deepcopy(levelObj['startState'])
+    mapNeedsRedraw = True
+    levelSurf = BASICFONT.render('Level %s of %s' % (levelNum + 1, len(levels)), 1, TEXTCOLOR)
+    levelRect = levelSurf.get_rect()
+    levelRect.bottomleft = (20, WINHEIGHT - 35)
+    mapWidth = len(mapObj) * TILEWIDTH
+    mapHeight = (len(mapObj[0]) - 1) * TILEFLOORHEIGHT + TILEHEIGHT
+    MAX_CAM_X_PAN = abs(HALF_WINHEIGHT - int(mapHeight / 2)) + TILEWIDTH
+    MAX_CAM_Y_PAN = abs(HALF_WINWIDTH - int(mapWidth / 2)) + TILEHEIGHT
+
+    levelIsComplete = False
+    # prati kako se kamera pomera
+    cameraOffsetX = 0
+    cameraOffsetY = 0
+    # prati da li se dugmad za pomeranje kamere drzi
+    cameraUp = False
+    cameraDown = False
+    cameraLeft = False
+    cameraRight = False
+
+    while True: # glavna petlja, jos jedna
+        #resetuj varijable
+        playerMoveTo = None
+        keyPressed = False
+        for event in pygame.event.get(): # hendluje eventove
+            if event.type == QUIT:
+                terminate()
+
+            elif event.type == KEYDOWN:
+                # hendluje pritiske na dugmad
+                keyPressed = True
+                if event.key == K_LEFT:
+                    playerMoveTo = LEFT
+                elif event.key == K_RIGHT:
+                    playerMoveTo = RIGHT
+                elif event.key == K_UP:
+                    playerMoveTo = UP
+                elif event.key == K_DOWN:
+                    playerMoveTo = DOWN
+
+                # namesta mod pomeranja kamere
+                elif event.key == K_a:
+                    cameraLeft = True
+                elif event.key == K_d:
+                    cameraRight = True
+                elif event.key == K_w:
+                    cameraUp = True
+                elif event.key == K_s:
+                    cameraDown = True
+
+                elif event.key == K_n:
+                    return 'next'
+                elif event.key == K_b:
+                    return 'back'
+
+                elif event.key == K_ESCAPE:
+                    terminate() # Esc 
+                elif event.key == K_BACKSPACE:
+                    return 'reset' # resetuje nivo
+                elif event.key == K_p:
+                    # menja izgled lika
+                    currentImage += 1
+                    if currentImage >= len(PLAYERIMAGES):
+                        # nakon poslednje slike iskoristi prvu
+                        currentImage = 0
+                    mapNeedsRedraw = True
+
+            elif event.type == KEYUP:
+                # iskljuci mod promene kamere
+                if event.key == K_a:
+                    cameraLeft = False
+                elif event.key == K_d:
+                    cameraRight = False
+                elif event.key == K_w:
+                    cameraUp = False
+                elif event.key == K_s:
+                    cameraDown = False
+        if playerMoveTo != None and not levelIsComplete:
+            # ako je igras kliknuo dugme za kretanje, kreci se
+            # i ako je moguce pomeraj zvezde
+            moved = makeMove(mapObj, gameStateObj, playerMoveTo)
+
+            if moved:
+                # inkrementiraj broj koraka
+                gameStateObj['stepCounter'] += 1
+                mapNeedsRedraw = True
+
+            if isLevelFinished(levelObj, gameStateObj):
+                # nivo je resen, prikazi solved
+                levelIsComplete = True
+                keyPressed = False
+        
